@@ -1,0 +1,113 @@
+---
+name: Linux / CPU x86-64 tests
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+
+env:
+  CCACHE_BASEDIR: "${{ github.workspace }}"
+  CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
+  EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
+
+jobs:
+  main_test_matrix:
+    name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
+    runs-on: [self-hosted, linux, x64, "${{ matrix.config }}" ]
+    # CPU runners have action runner directly in the home directory
+    env:
+      CCACHE_BASEDIR: "${{ github.workspace }}"
+      CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
+      EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
+      TSAN_OPTIONS: "second_deadlock_stack=1"
+      # full CTS launches thousands of tests, the compiler cache could grow to >10 GB -> avoid this
+      POCL_KERNEL_CACHE: "0"
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [19]
+        # cts_spirv = cts with SPIR-V
+        # tier1 = includes CTS without SPIR-V
+        # chipstar 1.1 only supports LLVM up to 17
+        # chipstar 1.2 only supports LLVM up to 19
+        # asan, tsan, ubsan = sanitizers
+        config: [cts_full]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Load Env vars
+        id: load-env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
+
+      - name: CMake
+        id: cmake
+        timeout-minutes: 60
+        run: |
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          mkdir -p ${EXAMPLES_DIR}/build_${{ matrix.llvm }}_${{ matrix.config }}
+          mkdir -p ${EXAMPLES_DIR}/source
+          
+          BUILD_FLAGS="-O2 -march=native"
+          cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+          -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
+          -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_${{ matrix.llvm }}_${{ matrix.config }} -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
+          -B ${{ github.workspace }}/build ${{ github.workspace }}
+
+      - name: Run Build
+        id: build
+        timeout-minutes: 60
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc) && make -j$(nproc) prepare_examples
+
+      - name: Build CTS Examples
+        id: build_cts_examples
+        # occasionally git timeouts on git clone of the examples
+        timeout-minutes: 60
+        if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' }}
+        run: |
+          cd ${{ github.workspace }}/build/examples/conformance && make -j$(nproc) conformance
+
+      - name: Run Tests
+        id: ctest
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        run: |
+          runCTest() {
+            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
+          }
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          if [ "${{ matrix.config }}" == "cts_full" ]; then
+            runCTest -L conformance_suite_full_main
+          elif [ "${{ matrix.config }}" == "cts_full_spirv" ]; then
+            runCTest -L conformance_suite_full_spirv
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+      - name: Build chipStar Examples
+        id: build_chipstar_examples
+        # occasionally git timeouts on git clone of the examples
+        timeout-minutes: 90
+        if: ${{ matrix.config == 'chipstar' }}
+        run: |
+          cd ${{ github.workspace }}/build/examples/chipStar && make -j$(nproc) chipStar
+
+      - name: Get CMake version
+        id: cmake_version
+        run: echo "version=$(cmake --version | head -n 1)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Cache CTest timings
+        id: cache_ctest
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57
+        with:
+          path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
+          key: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}
