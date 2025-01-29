@@ -9,8 +9,10 @@ on:
 
 env:
   CCACHE_BASEDIR: "${{ github.workspace }}"
-  CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
-  EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
+  CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
+  EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
+  # full CTS launches thousands of tests, the compiler cache could grow to >10 GB -> avoid this
+  POCL_KERNEL_CACHE: "0"
 
 jobs:
   # jobs run on Github-hosted runners.
@@ -22,6 +24,7 @@ jobs:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
     # 24.04 brings in LLVM up to 18 + ocl-icd 2.3.x (OpenCL 3.0 compatible)
     runs-on: ubuntu-24.04
+    timeout-minutes: 1600
     strategy:
       fail-fast: false
       matrix:
