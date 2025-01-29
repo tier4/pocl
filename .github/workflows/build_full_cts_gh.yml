@@ -1,5 +1,5 @@
 ---
-name: Linux / CPU x86-64 tests
+name: Linux / CPU dispatch full CTS
 
 permissions:
   contents: read
