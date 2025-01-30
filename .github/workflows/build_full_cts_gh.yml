@@ -87,7 +87,8 @@ jobs:
         id: build
         timeout-minutes: 60
         run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc) && make -j$(nproc) prepare_examples
+          cd ${{ github.workspace }}/build && make -j$(nproc)
+          cd ${{ github.workspace }}/build/examples/conformance && make -j$(nproc) conformance
 
       - name: Run Tests
         id: ctest
@@ -95,7 +96,7 @@ jobs:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build/examples/conformance &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
