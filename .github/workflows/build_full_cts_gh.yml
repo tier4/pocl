@@ -100,9 +100,18 @@ jobs:
           # remove the built libpocl.so library
           cd ${{ github.workspace }}/build/lib/CL && make clean
 
+      - name: Run clInfo
+        id: clinfo
+        env:
+          POCL_DEVICES: "basic" 
+        timeout-minutes: 5
+        run: |
+          clinfo
+
       - name: Run Tests
         id: ctest
         env:
+          POCL_DEVICES: "basic" 
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         run: |
           runCTest() {
