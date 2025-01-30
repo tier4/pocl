@@ -78,7 +78,7 @@ jobs:
           
           BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
           cmake \
-          -DDEVELOPER_MODE=ON -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DSTATIC_LLVM=1 \
+          -DDEVELOPER_MODE=ON -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
           -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
           -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
           -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_${{ matrix.llvm }}_${{ matrix.config }} \
