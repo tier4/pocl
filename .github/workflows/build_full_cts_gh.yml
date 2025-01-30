@@ -93,7 +93,6 @@ jobs:
 
       - name: Install PoCL
         id: install_pocl
-        if: ${{ matrix.config == 'install' }}
         timeout-minutes: 5
         run: |
           # remove CTestCustom.cmake - it contains POCL_BUILDING and OCL_ICD_VENDORS incompatible with install config
