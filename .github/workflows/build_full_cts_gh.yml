@@ -34,7 +34,7 @@ jobs:
         # static = statically linked LLVM component libraries
         # TBB, OpenMP = CPU drivers with TBB/OpenMP support
         # DBK = ONNX / libjpeg-turbo DBKs enabled
-        llvm: [19]
+        llvm: [18]
         config: [cts_full]
 
     steps:
