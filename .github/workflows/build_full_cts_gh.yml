@@ -91,6 +91,16 @@ jobs:
           cd ${{ github.workspace }}/build && make -j$(nproc)
           cd ${{ github.workspace }}/build/examples/conformance && make -j$(nproc) conformance
 
+      - name: Install PoCL
+        id: install_pocl
+        if: ${{ matrix.config == 'install' }}
+        timeout-minutes: 5
+        run: |
+          # remove CTestCustom.cmake - it contains POCL_BUILDING and OCL_ICD_VENDORS incompatible with install config
+          cd ${{ github.workspace }}/build && sudo make install && rm CTestCustom.cmake
+          # remove the built libpocl.so library
+          cd ${{ github.workspace }}/build/lib/CL && make clean
+
       - name: Run Tests
         id: ctest
         env:
