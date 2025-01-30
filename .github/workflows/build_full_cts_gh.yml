@@ -49,7 +49,7 @@ jobs:
       - name: Install prerequisites and ocl-icd
         run: >
           sudo apt update -y &&
-          sudo apt install -y wget gpg python3-dev libpython3-dev build-essential ocl-icd-libopencl1 cmake make git pkg-config ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g-dev libtbb-dev
+          sudo apt install -y wget gpg python3-dev libpython3-dev build-essential ocl-icd-libopencl1 clinfo cmake make git pkg-config ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g-dev libtbb-dev　
 
       - name: Install LLVM <= 18
         if: ${{ matrix.llvm <= 18 }}
