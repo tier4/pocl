@@ -80,6 +80,7 @@ jobs:
           cmake \
           -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
           -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
+          -DENABLE_SPIRV=OFF -DENABLE_CONFORMANCE=ON \
           -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_${{ matrix.llvm }}_${{ matrix.config }} -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
           -B ${{ github.workspace }}/build ${{ github.workspace }}
 
