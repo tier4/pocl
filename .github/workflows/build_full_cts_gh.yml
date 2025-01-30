@@ -102,14 +102,6 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build && make -j$(nproc) && make -j$(nproc) prepare_examples
 
-      - name: Build CTS Examples
-        id: build_cts_examples
-        # occasionally git timeouts on git clone of the examples
-        timeout-minutes: 60
-        if: ${{ matrix.config == 'cts_spirv' }}
-        run: |
-          cd ${{ github.workspace }}/build/examples/conformance && make -j$(nproc) conformance
-
       - name: Run Tests
         id: ctest
         env:
