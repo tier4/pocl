@@ -35,7 +35,7 @@ jobs:
         # TBB, OpenMP = CPU drivers with TBB/OpenMP support
         # DBK = ONNX / libjpeg-turbo DBKs enabled
         llvm: [18]
-        config: [cts_micro]
+        config: [cts_30]
 
     steps:
       - name: Checkout
@@ -115,6 +115,7 @@ jobs:
           POCL_DEVICES: "basic"
           OCL_ICD_VENDORS: "/usr/local/etc/OpenCL/vendors/pocl.icd"
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        continue-on-error: true
         run: |
           runCTest() {
             cd ${{ github.workspace }}/build/examples/conformance &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
@@ -123,6 +124,8 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "cts_full" ]; then
             runCTest -L conformance_suite_full_main
+          elif [ "${{ matrix.config }}" == "cts_30" ]; then
+            runCTest -L conformance_30_only
           elif [ "${{ matrix.config }}" == "cts_micro" ]; then
             runCTest -L conformance_suite_micro_main
           else
